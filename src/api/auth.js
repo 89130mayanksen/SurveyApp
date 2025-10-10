@@ -6,8 +6,8 @@ const API_BASE_URL = 'http://ec2-65-0-181-71.ap-south-1.compute.amazonaws.com';
 //Admin
 ///////////////
 
-export async function adminSignup(name, email, password, companyCode) {
-  const body = { name, email, password, companyCode };
+export async function adminSignup(name, email, password, companyCode, phone) {
+  const body = { name, email, password, companyCode, phone };
   // const body = {
   //   name: 'Jomn Doee',
   //   email: 'john1234@example.com',
@@ -118,50 +118,12 @@ export async function adminLoginVerify(adminId, otp) {
   }
 }
 
-////////
-///////
-//////
-/////
-////
-///
-//
-
-export async function createUserByAdmin(name, email, password, companyCode) {
-  const body = { name, email, password, companyCode };
-  try {
-    const token = await AsyncStorage.getItem('jwtToken');
-    console.log(token);
-    const response = await fetch(`${API_BASE_URL}/admin/createUser`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.log('Api error: ', errorData);
-    }
-
-    const responseData = await response.json();
-    console.log(responseData);
-
-    return responseData;
-  } catch (error) {
-    console.log('====================================');
-    console.log('Api or Fetch error: ', error);
-    console.log('====================================');
-  }
-}
-
 ///////////////
 // User
 ///////////////
 
-export async function userSignup(name, email, password, companyCode) {
-  const body = { name, email, password, companyCode };
+export async function userSignup(name, email, password, companyCode, phone) {
+  const body = { name, email, password, companyCode, phone };
   console.log('Req body', body);
 
   try {

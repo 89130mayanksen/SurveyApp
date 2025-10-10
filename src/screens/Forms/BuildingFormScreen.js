@@ -215,9 +215,7 @@ export default function BuildingFormScreen({ navigation }) {
 
     const result = await getSurveyById(SurveyId);
     if (result) {
-      navigation.navigate('FormsNavigator', {
-        survey: result.survey,
-      });
+      navigation.goBack();
     }
   }
 

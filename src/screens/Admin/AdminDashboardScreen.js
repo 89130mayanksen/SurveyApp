@@ -1,203 +1,184 @@
-import React, { useContext, useState } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useLayoutEffect,
+  useCallback,
+} from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
-  Alert,
   StyleSheet,
-  Modal,
+  ActivityIndicator,
+  ScrollView,
+  Alert,
 } from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
-
-import { createUserByAdmin } from '../../api/auth';
+import { getAllFeedbacksSurveys } from '../../api/admin';
+import Icon from 'react-native-vector-icons/Feather';
+import { useContext } from 'react';
 
 export default function AdminDashboardScreen({ navigation }) {
-  const { logout } = useContext(AuthContext); // Note: This line is commented out, so the logout from context is not being used.
-  const [createUser, setCreateUser] = useState(false);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [companyCode, setCompanyCode] = useState('');
+  const { logout } = useContext(AuthContext);
+  const [surveyCount, setSurveyCount] = useState(0);
+  const [licenseCount, setLicenseCount] = useState(0); // Placeholder
 
-  async function handleCreateUser(name, email, password, companyCode) {
-    console.log(name, email, password, companyCode);
-    if (!name || !email || !password || !companyCode) {
-      Alert.alert('All fields are required');
-      return;
-    }
-    if (name.length < 2) {
-      Alert.alert('Validation error', 'Name length is too short');
-      return;
-    }
-    if (email.length < 12) {
-      Alert.alert('Validation error', 'Email length is too short');
-      return;
-    }
-    if (password.length < 6) {
-      Alert.alert('Validation error', 'Password length is too short');
-      return;
-    }
-    if (companyCode.length < 2) {
-      Alert.alert('Validation error', 'Company code length is too short');
-      return;
-    }
-    const result = await createUserByAdmin(name, email, password, companyCode);
-    console.log('====================================');
-    console.log(result);
-    console.log('====================================');
-
-    Alert.alert('New User Created');
-    setCreateUser(false); // Close the modal after creation
-    // Reset form fields
-    setName('');
-    setEmail('');
-    setPassword('');
-    setCompanyCode('');
-  }
-
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text style={{ fontSize: 20 }}>Admin Dashboard</Text>
-      <TouchableOpacity
-        onPress={() => navigation.navigate('BuildingForm')}
-        style={{ marginTop: 20, padding: 12, backgroundColor: 'lightblue' }}
-      >
-        <Text>Add New Survey</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={logout}
-        style={{ marginTop: 20, padding: 12, backgroundColor: 'tomato' }}
-      >
-        <Text>Logout</Text>
-      </TouchableOpacity>
-      <View>
-        <TouchableOpacity
-          style={styles.createButton}
-          onPress={() => setCreateUser(true)}
-        >
-          <Text style={styles.createButtonText}>Create new user</Text>
-        </TouchableOpacity>
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={createUser}
-          onRequestClose={() => {
-            setCreateUser(!createUser);
+  // ✅ Add logout + reload button in header
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginRight: 10,
           }}
         >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setCreateUser(false)}
-              >
-                <Text style={{ fontSize: 24, color: '#999' }}>&times;</Text>
-              </TouchableOpacity>
-              <Text style={styles.modalTitle}>Create New User</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter user name"
-                placeholderTextColor="#888"
-                value={name}
-                onChangeText={setName}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter user email"
-                placeholderTextColor="#888"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter password"
-                placeholderTextColor="#888"
-                value={password}
-                onChangeText={setPassword}
-                // secureTextEntry={true}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter Company Code"
-                placeholderTextColor="#888"
-                value={companyCode}
-                onChangeText={setCompanyCode}
-              />
-              <TouchableOpacity
-                style={styles.submitButton}
-                onPress={() =>
-                  handleCreateUser(name, email, password, companyCode)
-                }
-              >
-                <Text style={styles.submitButtonText}>Create user</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-      </View>
+          <TouchableOpacity onPress={logout}>
+            <Icon name="log-out" size={24} color="#e24a4a" />
+          </TouchableOpacity>
+        </View>
+      ),
+    });
+  }, [navigation]);
+
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* 👤 All Users */}
+        <TouchableOpacity
+          style={styles.tabButton}
+          onPress={() => navigation.navigate('AllUsersScreen')}
+        >
+          <Icon name="users" size={22} color="#fff" />
+          <Text style={styles.tabText}>All Users</Text>
+        </TouchableOpacity>
+
+        {/* ✅ Submitted Surveys */}
+        <TouchableOpacity
+          style={styles.tabButton}
+          onPress={() => navigation.navigate('SubmittedSurveysScreen')}
+        >
+          <Icon name="check-circle" size={22} color="#fff" />
+          <Text style={styles.tabText}>Submitted Surveys</Text>
+        </TouchableOpacity>
+
+        {/* 🕒 Pending Surveys */}
+        <TouchableOpacity
+          style={styles.tabButton}
+          onPress={() => navigation.navigate('PendingSurveysScreen')}
+        >
+          <Icon name="clock" size={22} color="#fff" />
+          <Text style={styles.tabText}>Pending Surveys</Text>
+        </TouchableOpacity>
+
+        {/* Inside AdminDashboardScreen.js */}
+        <TouchableOpacity
+          style={styles.tabButton}
+          onPress={() => navigation.navigate('AllFeedbacksScreen')}
+        >
+          <Icon name="message-square" size={22} color="#fff" />
+          <Text style={styles.tabText}>User Feedbacks</Text>
+        </TouchableOpacity>
+
+        {/* 📩 Requests Tab */}
+        <TouchableOpacity
+          style={styles.tabButton}
+          onPress={() => navigation.navigate('RequestsScreen')}
+        >
+          <Icon name="inbox" size={22} color="#fff" />
+          <Text style={styles.tabText}>Requests</Text>
+        </TouchableOpacity>
+
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
+          <TouchableOpacity style={styles.infoTabButton}>
+            <Icon name="file-text" size={22} color="#fff" />
+            <Text style={styles.tabText}>
+              Total Surveys: {surveyCount || 0}
+            </Text>
+          </TouchableOpacity>
+
+          {/* 🔑 Total Licenses Tab */}
+          <TouchableOpacity style={styles.infoTabButton}>
+            <Icon name="key" size={22} color="#fff" />
+            <Text style={styles.tabText}>Total Licenses: {licenseCount}</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+
+      {/* ➕ Floating Create User Button */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => navigation.navigate('CreateUserScreen')}
+      >
+        <Icon name="user-plus" size={24} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  createButton: {
-    borderWidth: 1,
-    borderColor: 'black',
+  container: {
     padding: 20,
-    marginTop: 20,
+    backgroundColor: '#F9FAFB',
+    flexGrow: 1,
+    alignItems: 'center',
   },
-  createButtonText: {
-    fontSize: 16,
+  tabButton: {
+    width: '100%',
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    marginVertical: 10,
+    backgroundColor: '#4A90E2',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
-  modalContainer: {
+  infoTabButton: {
+    width: '50%',
+    height: 80,
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    marginVertical: 10,
+    backgroundColor: '#2b97aaff',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  tabText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  modalContent: {
-    width: '90%',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  input: {
-    height: 50,
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    marginBottom: 15,
-    backgroundColor: '#f9f9f9',
-  },
-  submitButton: {
-    backgroundColor: 'rgba(0, 106, 255, 1)',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  submitButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  closeButton: {
+  fab: {
     position: 'absolute',
-    top: 10,
-    right: 15,
+    right: 20,
+    bottom: 20,
+    backgroundColor: '#8e4ae2',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 5,
   },
 });

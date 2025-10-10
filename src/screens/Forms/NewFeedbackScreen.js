@@ -9,25 +9,22 @@ import {
 } from 'react-native';
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Picker } from '@react-native-picker/picker'; // 👈 ADD THIS
+import { Picker } from '@react-native-picker/picker';
+import Icon from 'react-native-vector-icons/Feather';
 import { postFeedbackForm } from '../../api/surveyForm';
 
 const initialFormData = {
-  mobileServicePerformance: {
-    voiceCall: '1',
-    internetPerformance: '1',
-  },
+  mobileServicePerformance: { voiceCall: '1', internetPerformance: '1' },
   broadbandServicePerformance: {
     provisioning: '1',
     speed: '1',
     resolution: '1',
   },
-  mobileNetworkCoverage: {
-    indoor: '1',
-    outdoor: '1',
-  },
+  mobileNetworkCoverage: { indoor: '1', outdoor: '1' },
   overallExperience: '1',
   suggestions: '',
+  signature: { name: '', mobile: '', email: '' },
+  representativeSignature: { name: '' },
 };
 
 export default function NewFeedbackScreen({ route, navigation }) {
@@ -45,6 +42,13 @@ export default function NewFeedbackScreen({ route, navigation }) {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleSignatureChange = (type, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [type]: { ...prev[type], [field]: value },
+    }));
+  };
+
   const validateAndSubmit = async () => {
     const requiredCategories = [
       'mobileServicePerformance',
@@ -52,25 +56,35 @@ export default function NewFeedbackScreen({ route, navigation }) {
       'mobileNetworkCoverage',
     ];
     let isValid = true;
-    let finalPayload = {};
+    let payload = {};
 
-    // 1. Validate Overall Experience
+    // Validate ratings
     const overall = parseInt(formData.overallExperience);
-    if (overall < 1 || overall > 5 || isNaN(overall)) {
-      isValid = false;
-    }
+    if (isNaN(overall) || overall < 1 || overall > 5) isValid = false;
 
-    // 2. Validate Nested Categories
-    requiredCategories.forEach(category => {
-      finalPayload[category] = {};
-      Object.entries(formData[category]).forEach(([field, ratingStr]) => {
-        const ratingNum = parseInt(ratingStr);
-        if (ratingNum < 1 || ratingNum > 5 || isNaN(ratingNum)) {
-          isValid = false;
-        }
-        finalPayload[category][field] = ratingNum;
+    requiredCategories.forEach(cat => {
+      payload[cat] = {};
+      Object.entries(formData[cat]).forEach(([field, value]) => {
+        const rating = parseInt(value);
+        if (isNaN(rating) || rating < 1 || rating > 5) isValid = false;
+        payload[cat][field] = rating;
       });
     });
+
+    // Validate signatures
+    const signature = formData.signature || {};
+    const repSignature = formData.representativeSignature || {};
+    if (!signature.name || !signature.mobile || !signature.email) {
+      Alert.alert('Validation Error', 'Please fill in your signature details.');
+      return;
+    }
+    if (!repSignature.name) {
+      Alert.alert(
+        'Validation Error',
+        'Please fill in the representative name.',
+      );
+      return;
+    }
 
     if (!isValid) {
       Alert.alert(
@@ -80,20 +94,16 @@ export default function NewFeedbackScreen({ route, navigation }) {
       return;
     }
 
-    const finalSubmissionBody = {
-      ...finalPayload,
+    const finalPayload = {
+      ...payload,
       overallExperience: overall,
       suggestions: formData.suggestions,
+      signature,
+      representativeSignature: repSignature,
     };
 
-    const result = await postFeedbackForm(
-      surveyId,
-      buildingId,
-      finalSubmissionBody,
-    );
-
+    const result = await postFeedbackForm(surveyId, buildingId, finalPayload);
     if (result) {
-      console.log('✅ FINAL API PAYLOAD:', finalSubmissionBody);
       Alert.alert('Success', 'Feedback submitted successfully!', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
@@ -108,11 +118,9 @@ export default function NewFeedbackScreen({ route, navigation }) {
         style={styles.picker}
         dropdownIconColor="#007AFF"
       >
-        <Picker.Item label="1" value="1" />
-        <Picker.Item label="2" value="2" />
-        <Picker.Item label="3" value="3" />
-        <Picker.Item label="4" value="4" />
-        <Picker.Item label="5" value="5" />
+        {[1, 2, 3, 4, 5].map(num => (
+          <Picker.Item key={num} label={`${num}`} value={`${num}`} />
+        ))}
       </Picker>
     </View>
   );
@@ -159,9 +167,8 @@ export default function NewFeedbackScreen({ route, navigation }) {
           <Text style={styles.sectionTitle}>Overall Experience</Text>
           <View style={styles.inputRow}>
             <Text style={styles.inputLabel}>Rating</Text>
-            {renderPicker(
-              formData.overallExperience,
-              value => handleSingleFieldChange('overallExperience', value),
+            {renderPicker(formData.overallExperience, value =>
+              handleSingleFieldChange('overallExperience', value),
             )}
           </View>
         </View>
@@ -173,11 +180,67 @@ export default function NewFeedbackScreen({ route, navigation }) {
             style={styles.suggestionInput}
             multiline
             numberOfLines={4}
-            placeholder="Write any suggestions or additional feedback..."
+            placeholder="Write any suggestions..."
             placeholderTextColor="#aaa"
             onChangeText={text => handleSingleFieldChange('suggestions', text)}
-            value={formData.suggestions}
+            value={formData.suggestions || ''}
           />
+        </View>
+
+        {/* Your Signature */}
+        <View style={[styles.card, styles.signatureCard]}>
+          <Text style={styles.sectionTitle}>Your Signature</Text>
+          <View style={styles.inputWithIcon}>
+            <Icon name="user" size={18} color="#2563EB" />
+            <TextInput
+              style={styles.textInput}
+              placeholder="Name"
+              placeholderTextColor={'#666'}
+              value={formData.signature?.name || ''}
+              onChangeText={t => handleSignatureChange('signature', 'name', t)}
+            />
+          </View>
+          <View style={styles.inputWithIcon}>
+            <Icon name="phone" size={18} color="#16A34A" />
+            <TextInput
+              style={styles.textInput}
+              placeholder="Mobile"
+              placeholderTextColor={'#666'}
+              keyboardType="phone-pad"
+              value={formData.signature?.mobile || ''}
+              onChangeText={t =>
+                handleSignatureChange('signature', 'mobile', t)
+              }
+            />
+          </View>
+          <View style={styles.inputWithIcon}>
+            <Icon name="mail" size={18} color="#EF4444" />
+            <TextInput
+              style={styles.textInput}
+              placeholder="Email"
+              placeholderTextColor={'#666'}
+              keyboardType="email-address"
+              value={formData.signature?.email || ''}
+              onChangeText={t => handleSignatureChange('signature', 'email', t)}
+            />
+          </View>
+        </View>
+
+        {/* Representative Signature */}
+        <View style={[styles.card, styles.signatureCard]}>
+          <Text style={styles.sectionTitle}>Representative Signature</Text>
+          <View style={styles.inputWithIcon}>
+            <Icon name="user-check" size={18} color="#F59E0B" />
+            <TextInput
+              style={styles.textInput}
+              placeholder="Name"
+              placeholderTextColor={'#666'}
+              value={formData.representativeSignature?.name || ''}
+              onChangeText={t =>
+                handleSignatureChange('representativeSignature', 'name', t)
+              }
+            />
+          </View>
         </View>
 
         {/* Categories */}
@@ -206,7 +269,7 @@ export default function NewFeedbackScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#f9fafb' },
+  safeArea: { flex: 1, backgroundColor: '#f3f4f6' },
   scrollView: { padding: 20 },
   header: {
     flexDirection: 'row',
@@ -238,13 +301,18 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
   },
+  signatureCard: {
+    borderWidth: 1,
+    borderColor: '#e0e7ff',
+    backgroundColor: '#f0f5ff',
+  },
   sectionTitle: {
     fontSize: 17,
     fontWeight: '700',
     color: '#111827',
     marginBottom: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: '#007AFF',
+    borderLeftWidth: 4,
+    borderLeftColor: '#2563EB',
     paddingLeft: 8,
   },
   inputRow: {
@@ -268,10 +336,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#fff',
   },
-  picker: {
-    height: 50,
-    color: '#111827',
-  },
+  picker: { height: 50, color: '#111827' },
   suggestionInput: {
     borderWidth: 1,
     borderColor: '#d1d5db',
@@ -281,6 +346,22 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textAlignVertical: 'top',
     backgroundColor: '#f9fafb',
+  },
+  textInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 15,
+    backgroundColor: '#f9fafb',
+    marginBottom: 10,
+  },
+  inputWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    gap: 10,
   },
   submitButton: {
     backgroundColor: '#2563eb',

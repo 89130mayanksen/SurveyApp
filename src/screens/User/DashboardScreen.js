@@ -21,7 +21,6 @@ import {
   getFeedbackForm,
   getUserUploads,
   submitSurvey,
-  submitFeedback,
   getSize,
 } from '../../api/surveyForm';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -51,6 +50,8 @@ export default function DashboardScreen({ navigation }) {
 
   const [uploadsData, setUploadsData] = useState({});
   const [surveySizes, setSurveySizes] = useState({});
+
+  const [loggingOut, setLoggingOut] = useState(false);
 
   // { [surveyId]: { totalFields, completedFields, pendingFields, percentageCompleted } }
 
@@ -497,8 +498,25 @@ export default function DashboardScreen({ navigation }) {
         >
           <Text style={styles.buttonText}>Add New Survey</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={logout} style={styles.logoutButton}>
-          <Text style={styles.buttonText}>Logout</Text>
+        <TouchableOpacity
+          flex={1}
+          marginLeft={8}
+          style={styles.logoutButton}
+          onPress={async () => {
+            setLoggingOut(true);
+            try {
+              await logout();
+            } finally {
+              setLoggingOut(false);
+            }
+          }}
+          disabled={loggingOut}
+        >
+          {loggingOut ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Logout</Text>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>

@@ -279,6 +279,7 @@ export default function Field({ field, partId, formId, surveyId, buildingId }) {
       {showCommentInput && (
         <TextInput
           style={styles.commentInput}
+          placeholderTextColor={'#666'}
           placeholder="Type your comment..."
           value={commentText}
           onChangeText={setCommentText}

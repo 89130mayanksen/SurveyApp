@@ -9,6 +9,9 @@ import {
 } from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
 import TraiLogo from '../../TraiLogo.svg';
+import VinfoLogo from '../../VinfoLogo.svg';
+import VinfoLogo2 from '../../VinfoLogo2.svg';
+import VinfoLogo3 from '../../VinfoLogo3.svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { adminLogin, userLogin } from '../../api/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -57,7 +60,7 @@ export default function LoginScreen({ navigation }) {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.logoContainer}>
-          <TraiLogo width={90} height={90} />
+          <VinfoLogo3 width={100} height={85} />
         </View>
 
         <Text style={styles.title}>Welcome Back!</Text>
@@ -140,7 +143,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   title: {
     fontSize: 28,
@@ -156,15 +159,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   input: {
-    backgroundColor: '#FFF', 
+    backgroundColor: '#FFF',
     color: '#333',
     marginBottom: 15,
     paddingHorizontal: 18,
     paddingVertical: 18,
     borderRadius: 12,
     fontSize: 16,
-    borderWidth: 1, 
-    borderColor: '#E0E0E0', 
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,

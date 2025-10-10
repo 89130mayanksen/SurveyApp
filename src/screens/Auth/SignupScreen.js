@@ -20,6 +20,7 @@ export default function SignupScreen({ navigation }) {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [companyCode, setCompanyCode] = useState('');
   const [role, setRole] = useState('user');
@@ -38,6 +39,10 @@ export default function SignupScreen({ navigation }) {
     }
     if (email.length < 12) {
       Alert.alert('Validation error', 'Email length is too short');
+      return;
+    }
+    if (phone.length !== 10) {
+      Alert.alert('Validation error', 'Phone number is not valid');
       return;
     }
     if (password.length < 6) {
@@ -60,7 +65,7 @@ export default function SignupScreen({ navigation }) {
     }
     ////////////////////////////////////////////
     if (role === 'admin') {
-      const result = await adminSignup(name, email, password, companyCode);
+      const result = await adminSignup(name, email, password, companyCode, phone);
       console.log(result);
       if (result.success) {
         Alert.alert(result.message, 'Please login with your new account');
@@ -72,7 +77,7 @@ export default function SignupScreen({ navigation }) {
 
     ////////////////////////////////////////////
     if (role === 'user') {
-      const result = await userSignup(name, email, password, companyCode);
+      const result = await userSignup(name, email, password, companyCode, phone);
       console.log(result);
       if (result.success) {
         Alert.alert(result.message, 'Please login with your new account');
@@ -113,6 +118,15 @@ export default function SignupScreen({ navigation }) {
           onChangeText={value => setEmail(value)}
           keyboardType="email-address"
           autoCapitalize="none"
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Phone Number"
+          placeholderTextColor="#999"
+          value={phone}
+          onChangeText={setPhone}
+          keyboardType='phone-pad'
         />
 
         <View style={styles.passwordInputContainer}>
