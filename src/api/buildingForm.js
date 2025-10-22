@@ -42,6 +42,7 @@ export async function buildingFormCreation(body) {
 export async function getBuildingDetails(){
   try {
     const token = await AsyncStorage.getItem('jwtToken');
+    console.log(token);
     const response = await fetch(`${API_BASE_URL}/building/getdetails`,{
       method: 'GET',
       headers: {

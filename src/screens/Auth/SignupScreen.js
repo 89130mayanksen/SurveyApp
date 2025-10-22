@@ -65,7 +65,13 @@ export default function SignupScreen({ navigation }) {
     }
     ////////////////////////////////////////////
     if (role === 'admin') {
-      const result = await adminSignup(name, email, password, companyCode, phone);
+      const result = await adminSignup(
+        name,
+        email,
+        password,
+        companyCode,
+        phone,
+      );
       console.log(result);
       if (result.success) {
         Alert.alert(result.message, 'Please login with your new account');
@@ -77,10 +83,19 @@ export default function SignupScreen({ navigation }) {
 
     ////////////////////////////////////////////
     if (role === 'user') {
-      const result = await userSignup(name, email, password, companyCode, phone);
+      const result = await userSignup(
+        name,
+        email,
+        password,
+        companyCode,
+        phone,
+      );
       console.log(result);
       if (result.success) {
-        Alert.alert(result.message, 'Please login with your new account');
+        Alert.alert(
+          result.message,
+          `The Request has been sent for admin approval of company code ${companyCode}.`,
+        );
         await AsyncStorage.setItem('role', result.data.role);
         navigation.navigate('Login');
       }
@@ -126,7 +141,7 @@ export default function SignupScreen({ navigation }) {
           placeholderTextColor="#999"
           value={phone}
           onChangeText={setPhone}
-          keyboardType='phone-pad'
+          keyboardType="phone-pad"
         />
 
         <View style={styles.passwordInputContainer}>

@@ -14,7 +14,6 @@ import {
   Alert,
 } from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
-import { getAllFeedbacksSurveys } from '../../api/admin';
 import Icon from 'react-native-vector-icons/Feather';
 import { useContext } from 'react';
 
@@ -23,7 +22,7 @@ export default function AdminDashboardScreen({ navigation }) {
   const [surveyCount, setSurveyCount] = useState(0);
   const [licenseCount, setLicenseCount] = useState(0); // Placeholder
 
-  // ✅ Add logout + reload button in header
+  // Add logout + reload button in header
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -32,6 +31,9 @@ export default function AdminDashboardScreen({ navigation }) {
             flexDirection: 'row',
             alignItems: 'center',
             marginRight: 10,
+            borderRadius: 25,
+            backgroundColor: '#f8d7da',
+            padding: 10,
           }}
         >
           <TouchableOpacity onPress={logout}>
@@ -45,7 +47,7 @@ export default function AdminDashboardScreen({ navigation }) {
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.container}>
-        {/* 👤 All Users */}
+        {/* All Users */}
         <TouchableOpacity
           style={styles.tabButton}
           onPress={() => navigation.navigate('AllUsersScreen')}
@@ -54,7 +56,7 @@ export default function AdminDashboardScreen({ navigation }) {
           <Text style={styles.tabText}>All Users</Text>
         </TouchableOpacity>
 
-        {/* ✅ Submitted Surveys */}
+        {/* Submitted Surveys */}
         <TouchableOpacity
           style={styles.tabButton}
           onPress={() => navigation.navigate('SubmittedSurveysScreen')}
@@ -63,7 +65,7 @@ export default function AdminDashboardScreen({ navigation }) {
           <Text style={styles.tabText}>Submitted Surveys</Text>
         </TouchableOpacity>
 
-        {/* 🕒 Pending Surveys */}
+        {/* Pending Surveys */}
         <TouchableOpacity
           style={styles.tabButton}
           onPress={() => navigation.navigate('PendingSurveysScreen')}
@@ -81,7 +83,7 @@ export default function AdminDashboardScreen({ navigation }) {
           <Text style={styles.tabText}>User Feedbacks</Text>
         </TouchableOpacity>
 
-        {/* 📩 Requests Tab */}
+        {/* Requests Tab */}
         <TouchableOpacity
           style={styles.tabButton}
           onPress={() => navigation.navigate('RequestsScreen')}
@@ -98,7 +100,7 @@ export default function AdminDashboardScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
 
-          {/* 🔑 Total Licenses Tab */}
+          {/*Total Licenses Tab */}
           <TouchableOpacity style={styles.infoTabButton}>
             <Icon name="key" size={22} color="#fff" />
             <Text style={styles.tabText}>Total Licenses: {licenseCount}</Text>
@@ -106,7 +108,7 @@ export default function AdminDashboardScreen({ navigation }) {
         </View>
       </ScrollView>
 
-      {/* ➕ Floating Create User Button */}
+      {/*Floating Create User Button */}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => navigation.navigate('CreateUserScreen')}

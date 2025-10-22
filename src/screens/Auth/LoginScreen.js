@@ -12,6 +12,7 @@ import TraiLogo from '../../TraiLogo.svg';
 import VinfoLogo from '../../VinfoLogo.svg';
 import VinfoLogo2 from '../../VinfoLogo2.svg';
 import VinfoLogo3 from '../../VinfoLogo3.svg';
+import ToolLogo from '../../toolLogo.svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { adminLogin, userLogin } from '../../api/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -60,7 +61,7 @@ export default function LoginScreen({ navigation }) {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.logoContainer}>
-          <VinfoLogo3 width={100} height={85} />
+          <ToolLogo width={85} height={85} />
         </View>
 
         <Text style={styles.title}>Welcome Back!</Text>

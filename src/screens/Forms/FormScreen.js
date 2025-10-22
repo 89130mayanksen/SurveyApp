@@ -8,29 +8,63 @@ import {
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import Part from '../../components/Part';
-import Icon from 'react-native-vector-icons/Ionicons'; // Using Ionicons for back arrow
+import Icon from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function FormScreen({ navigation }) {
   const route = useRoute();
-  const { form, surveyId, buildingId } = route.params;
+  const { form, surveyId, buildingId, allForms = [] } = route.params;
+  console.log(form);
+
+  // Find current form index and get next form (if available)
+  const currentIndex = allForms.findIndex(f => f._id === form._id);
+  const nextForm = currentIndex !== -1 ? allForms[currentIndex + 1] : null;
 
   return (
     <SafeAreaView style={styles.screen}>
       {/* Header */}
       <View style={styles.header}>
+        {/* Back Button */}
         <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()} // Correct navigation
+          style={styles.iconButton}
+          onPress={() => navigation.goBack()}
         >
-          <View style={styles.backButtonContainer}>
-            <Icon name="arrow-back" size={24} color="#1E3A8A" />
-            <Text style={styles.backText}>Back</Text>
-          </View>
+          <Icon name="arrow-back" size={22} color="#1E3A8A" />
+          <Text style={styles.buttonText}>Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>{form.name}</Text>
-        <View style={styles.divider} />
+
+        {/* Home Button */}
+        <TouchableOpacity
+          style={styles.homeButton}
+          onPress={() => navigation.navigate('Dashboard')}
+        >
+          <Icon name="home" size={22} color="#1E3A8A" />
+        </TouchableOpacity>
+
+        {/* Next Button */}
+        {nextForm ? (
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() =>
+              navigation.push('FormScreen', {
+                form: nextForm,
+                surveyId,
+                buildingId,
+                allForms: item.forms,
+              })
+            }
+          >
+            <Text style={styles.buttonText}>Next</Text>
+            <Icon name="arrow-forward" size={22} color="#1E3A8A" />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 60 }} /> // keeps header aligned
+        )}
       </View>
+
+      {/* Title */}
+      <Text style={styles.title}>{form.formName || form.name}</Text>
+      <View style={styles.divider} />
 
       {/* Parts */}
       <ScrollView
@@ -55,44 +89,45 @@ export default function FormScreen({ navigation }) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#F4F8FF', // soft blue-white background
+    backgroundColor: '#F4F8FF',
   },
   header: {
-    paddingVertical: 18,
-    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: '#ffffff',
     elevation: 2,
-    shadowColor: '#1E90FF',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
     borderBottomWidth: 1,
     borderColor: '#E3EEFF',
   },
-  backButtonContainer: {
+  iconButton: {
     flexDirection: 'row',
-    paddingHorizontal: 10,
-    paddingVertical: 5, 
-    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(228, 228, 228, 0.81)',
+    backgroundColor: '#EAF2FF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 10,
   },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: '10',
+  homeButton: {
+    backgroundColor: '#EAF2FF',
+    borderRadius: 50,
+    padding: 10,
+    elevation: 2,
   },
-  backText: {
+  buttonText: {
     color: '#1E3A8A',
     fontSize: 16,
-    marginLeft: 4,
     fontWeight: '600',
+    marginHorizontal: 5,
   },
   title: {
     fontSize: 22,
     fontWeight: '700',
     color: '#1E3A8A',
     textAlign: 'center',
+    marginTop: 10,
   },
   divider: {
     height: 3,

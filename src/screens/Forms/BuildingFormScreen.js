@@ -15,6 +15,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { useContext } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
+// import Geolocation from '@react-native-community/geolocation';
 import Geolocation from 'react-native-geolocation-service';
 import { buildingFormCreation } from '../../api/buildingForm';
 import { createSurveyForm, getSurveyById } from '../../api/surveyForm';
@@ -29,6 +30,7 @@ export default function BuildingFormScreen({ navigation }) {
   const [form, setForm] = useState({
     property_manager_name: '',
     type_property: 'Apartments',
+    building_condition: 'old',
     building_name: '',
     location_details_lat: '',
     location_details_long: '',
@@ -39,82 +41,55 @@ export default function BuildingFormScreen({ navigation }) {
 
   const [submitting, setSubmitting] = useState(false);
 
-  const requestLocationPermission = async () => {
+  const requestPermission = async () => {
     if (Platform.OS === 'android') {
-      try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-          {
-            title: 'Location Permission',
-            message: 'We need access to your location.',
-            buttonPositive: 'OK',
-          },
-        );
-        console.log(granted);
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
-      } catch (err) {
-        console.warn('Permission request error:', err);
-        return false;
-      }
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: 'Location Permission',
+          message: 'This app needs access to your location.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
     }
-    return true; // iOS permissions handled via Info.plist
+    return true; // iOS handled by plist
   };
 
-  // const getLocation = async () => {
-  //   const hasPermission = await requestPermission();
-  //   if (!hasPermission) {
-  //     console.log('Location permission denied');
-  //     return;
-  //   }
-  //   setLoadingLocation(true);
-
-  //   try {
-  //     Geolocation.getCurrentPosition(
-  //       position => {
-  //         console.log('Loading location');
-  //         const { latitude, longitude } = position.coords;
-  //         setLocation({ latitude, longitude });
-  //         handleChange('location_details_lat', latitude.toString());
-  //         handleChange('location_details_long', longitude.toString());
-  //         console.log('Latitude:', latitude, 'Longitude:', longitude);
-  //         setLoadingLocation(false);
-  //         console.log('Loading location');
-  //       },
-  //       error => {
-  //         console.log('Error getting location:', error);
-  //         setLoadingLocation(false);
-  //       },
-  //       { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
-  //     );
-  //   } catch (error) {
-  //     console.log('Error getting location: ', error);
-  //     setLoadingLocation(false);
-  //   }
-  // };
-
   const getLocation = async () => {
-    const hasPermission = await requestLocationPermission();
-    console.log(hasPermission);
-    if (!hasPermission) {
-      Alert.alert('Permission Denied', 'Cannot access location.');
-      return;
-    }
-
     try {
+      const hasPermission = await requestPermission();
+      console.log(hasPermission);
+      if (!hasPermission) {
+        console.log('Location permission denied');
+        return;
+      } else {
+        console.log('Location permission granted');
+      }
+
+      setLoadingLocation(true);
+
       Geolocation.getCurrentPosition(
-        pos => {
-          Alert.alert('Error', 'Unable to get location.');
-          setLocation(pos.coords);
+        position => {
+          const { latitude, longitude } = position.coords;
+          // setLocation({ latitude, longitude });
+          // handleChange('location_details_lat', latitude.toString());
+          // handleChange('location_details_long', longitude.toString());
+          console.log('Latitude:', latitude, 'Longitude:', longitude);
+          setLoadingLocation(false);
         },
         error => {
-          console.log('Geolocation error:', error);
-          Alert.alert('Error', error.message);
+          console.log('Error getting location:', error.message);
+          setLoadingLocation(false);
         },
         { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 },
       );
-    } catch (err) {
-      console.log('Unexpected error:', err);
-      Alert.alert('Error', 'Unable to get location.');
+    } catch (error) {
+      console.log('====================================');
+      console.log(error);
+      console.log('====================================');
     }
   };
 
@@ -312,6 +287,21 @@ export default function BuildingFormScreen({ navigation }) {
         </View>
 
         <View style={styles.InputContainer}>
+          <Text style={styles.InputText}>Building condition</Text>
+          <View style={styles.PickerWrapper}>
+            <Picker
+              style={styles.Picker}
+              dropdownIconColor="#007BFF" // Light theme accent color
+              selectedValue={form.building_condition}
+              onValueChange={value => handleChange('building_condition', value)}
+            >
+              <Picker.Item label="new" value="new" />
+              <Picker.Item label="old" value="old" />
+            </Picker>
+          </View>
+        </View>
+
+        <View style={styles.InputContainer}>
           <Text style={styles.InputText}>Building Name</Text>
           <TextInput
             style={styles.Input}
@@ -322,7 +312,7 @@ export default function BuildingFormScreen({ navigation }) {
           />
         </View>
 
-        <View style={{ padding: 10 }}>
+        <View style={{ paddingBottom: 13 }}>
           <Text style={styles.InputText}>Location Details</Text>
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
             <TextInput
@@ -343,8 +333,8 @@ export default function BuildingFormScreen({ navigation }) {
             />
             <TouchableOpacity
               style={styles.LocateButton}
-              onPress={getLocation}
-              disabled={true}
+              onPress={() => getLocation()}
+              // disabled={true}
             >
               {loadingLocation ? (
                 <ActivityIndicator size="small" color="#fff" />

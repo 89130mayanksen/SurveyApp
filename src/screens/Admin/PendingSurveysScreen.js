@@ -1,31 +1,17 @@
-import React, { useEffect, useState, useCallback, memo } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ActivityIndicator,
   FlatList,
-  LayoutAnimation,
-  Platform,
-  UIManager,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import { useNavigation } from '@react-navigation/native';
 import { getAllPendingSurveys } from '../../api/admin';
 
-// if (
-//   Platform.OS === 'android' &&
-//   UIManager.setLayoutAnimationEnabledExperimental
-// ) {
-//   UIManager.setLayoutAnimationEnabledExperimental(true);
-// }
-
 export default function PendingSurveysScreen() {
-  const [pendingData, setPendingData] = useState([]); // [{ user, pendingSurveys }]
-  const [expandedSurveyIndex, setExpandedSurveyIndex] = useState(null);
+  const [pendingData, setPendingData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigation = useNavigation();
 
   useEffect(() => {
     fetchPendingSurveys();
@@ -36,31 +22,16 @@ export default function PendingSurveysScreen() {
       const result = await getAllPendingSurveys();
       setPendingData(result?.data || []);
     } catch (error) {
-      console.error("❌ Error fetching pending surveys:", error);
+      console.error('❌ Error fetching pending surveys:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleSurveyExpand = useCallback(
-    (surveyIndex) => {
-      setExpandedSurveyIndex(
-        expandedSurveyIndex === surveyIndex ? null : surveyIndex
-      );
-    },
-    [expandedSurveyIndex]
-  );
-
-  const handleSurveyPress = useCallback(
-    (survey) =>
-      navigation.navigate("SurveyDetailScreen", { survey, user: null }),
-    [navigation]
-  );
-
   if (loading) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#4A90E2" />
+        <ActivityIndicator size="large" color="#2563EB" />
       </View>
     );
   }
@@ -78,269 +49,229 @@ export default function PendingSurveysScreen() {
       data={pendingData}
       keyExtractor={(item) => item.user._id}
       contentContainerStyle={styles.container}
-      showsVerticalScrollIndicator={false}
       renderItem={({ item: userGroup }) => (
         <View style={styles.userCard}>
-          {/* Parent Card: User Info */}
-          <View style={styles.userHeader}>
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
-              <Icon name="user" size={20} color="#0284C7" />
+          {/* 👤 User Info */}
+          <View style={styles.userInfo}>
+            <View style={styles.row}>
+              <Icon name="user" size={18} color="#2563EB" />
               <Text style={styles.userName}>{userGroup.user.name}</Text>
             </View>
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 2 }}>
+            <View style={styles.row}>
               <Icon name="mail" size={16} color="#6B7280" />
               <Text style={styles.userEmail}>{userGroup.user.email}</Text>
             </View>
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View style={styles.row}>
               <Icon name="phone" size={16} color="#6B7280" />
               <Text style={styles.userPhone}>{userGroup.user.phone}</Text>
             </View>
           </View>
 
-          {/* Child: User's Pending Surveys */}
-          {userGroup.pendingSurveys.map((survey, index) => {
-            const isExpanded = expandedSurveyIndex === survey.surveyId;
-            return (
-              <View key={survey.surveyId} style={styles.surveyCard}>
-                <TouchableOpacity
-                  style={styles.headerRow}
-                  onPress={() => toggleSurveyExpand(survey.surveyId)}
-                >
-                  <Icon name="home" size={22} color="#4A90E2" />
-                  <Text style={styles.buildingName}>
-                    {survey.building?.building_name || "Unnamed Building"}
-                  </Text>
-                  <Icon
-                    name={isExpanded ? "chevron-up" : "chevron-down"}
-                    size={20}
-                    color="#6B7280"
-                  />
-                </TouchableOpacity>
+          {/* 📊 Summary */}
+          <View style={styles.summaryBox}>
+            <View style={styles.summaryItem}>
+              <Icon name="check-circle" size={18} color="#16A34A" />
+              <Text style={styles.summaryText}>
+                Submitted: {userGroup.submittedSurveys}
+              </Text>
+            </View>
+            <View style={styles.summaryItem}>
+              <Icon name="clock" size={18} color="#F59E0B" />
+              <Text style={styles.summaryText}>
+                Pending: {userGroup.pendingCount}
+              </Text>
+            </View>
+          </View>
 
-                {isExpanded && (
-                  <View style={styles.expandedContainer}>
-                    <View style={styles.infoRow}>
-                      <Icon name="map-pin" size={16} color="#64748B" />
-                      <Text style={styles.infoText}>
-                        {survey.building?.location_address || "Unknown Location"}
-                      </Text>
-                    </View>
-                    <View style={styles.infoRow}>
-                      <Icon name="calendar" size={16} color="#64748B" />
-                      <Text style={styles.infoText}>
-                        Created: {new Date(survey.createdAt).toLocaleString()}
-                      </Text>
-                    </View>
-                    <View style={styles.formRow}>
-                      <Icon name="clipboard" size={16} color="#fff" />
-                      <Text style={styles.formBadge}>{survey.forms?.length || 0} Forms</Text>
-                    </View>
-                    <TouchableOpacity
-                      style={styles.detailButton}
-                      onPress={() => handleSurveyPress(survey)}
-                    >
-                      <Text style={styles.detailButtonText}>Open Survey Details</Text>
-                      <Icon name="arrow-right" size={16} color="#fff" style={{ marginLeft: 6 }} />
-                    </TouchableOpacity>
+          {/* 🏢 Pending Surveys */}
+          {userGroup.pendingSurveys.length > 0 ? (
+            userGroup.pendingSurveys.map((survey, idx) => {
+              const total = survey.progress?.totalFields || 0;
+              const completed = survey.progress?.completedFields || 0;
+              const percentage =
+                total > 0 ? Math.round((completed / total) * 100) : 0;
+
+              return (
+                <View key={idx} style={styles.surveyCard}>
+                  <View style={styles.row}>
+                    <Icon name="home" size={18} color="#1E293B" />
+                    <Text style={styles.buildingName}>
+                      {survey.buildingName || 'Unnamed Building'}
+                    </Text>
                   </View>
-                )}
-              </View>
-            );
-          })}
+
+                  <View style={styles.row}>
+                    <Icon name="map-pin" size={16} color="#6B7280" />
+                    <Text style={styles.infoText}>
+                      {survey.locationAddress || 'Unknown Location'}
+                    </Text>
+                  </View>
+
+                  <View style={styles.row}>
+                    <Icon name="calendar" size={16} color="#6B7280" />
+                    <Text style={styles.infoText}>
+                      Created: {new Date(survey.createdAt).toLocaleString()}
+                    </Text>
+                  </View>
+
+                  {/* 📈 Progress */}
+                  <View style={[styles.row, { marginTop: 8 }]}>
+                    <Icon name="bar-chart-2" size={16} color="#2563EB" />
+                    <Text style={styles.progressText}>
+                      Progress: {percentage}% ({completed}/{total} fields)
+                    </Text>
+                  </View>
+
+                  {/* 🔵 Progress Bar */}
+                  <View style={styles.progressBarContainer}>
+                    <View
+                      style={[
+                        styles.progressBarFill,
+                        { width: `${percentage}%` },
+                      ]}
+                    />
+                  </View>
+                </View>
+              );
+            })
+          ) : (
+            <View style={styles.noSurveyCard}>
+              <Icon name="x-circle" size={16} color="#E74C3C" />
+              <Text style={styles.noSurveyText}>No pending surveys</Text>
+            </View>
+          )}
         </View>
       )}
     />
   );
 }
 
-
-/** ✅ Memoized Card Component for better performance */
-const Card = ({
-  item,
-  index,
-  expandedIndex,
-  toggleExpand,
-  handleSurveyPress,
-}) => {
-  const isExpanded = expandedIndex === index;
-
-  return (
-    <View style={styles.surveyCard}>
-      {/* Header Row */}
-      <TouchableOpacity
-        activeOpacity={0.85}
-        onPress={() => toggleExpand(index)}
-        style={styles.headerRow}
-      >
-        <Icon name="home" size={22} color="#4A90E2" />
-        <Text style={styles.buildingName}>
-          {item?.building?.building_name || 'Unnamed Building'}
-        </Text>
-        <View style={styles.categoryBadge}>
-          <Text style={styles.categoryText}>
-            {item?.building?.category || 'N/A'}
-          </Text>
-        </View>
-        <Icon
-          name={isExpanded ? 'chevron-up' : 'chevron-down'}
-          size={20}
-          color="#6B7280"
-          style={{ marginLeft: 8 }}
-        />
-      </TouchableOpacity>
-
-      {isExpanded && (
-        <View style={styles.expandedContainer}>
-          <View style={styles.infoRow}>
-            <Icon name="map-pin" size={16} color="#64748B" />
-            <Text style={styles.infoText}>
-              {item?.building?.location_address || 'Unknown Location'}
-            </Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Icon name="calendar" size={16} color="#64748B" />
-            <Text style={styles.infoText}>
-              Created: {new Date(item.createdAt).toLocaleString()}
-            </Text>
-          </View>
-
-          <View style={styles.formRow}>
-            <Icon name="clipboard" size={16} color="#fff" />
-            <Text style={styles.formBadge}>
-              {item?.forms?.length || 0} Forms
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.detailButton}
-            onPress={() => handleSurveyPress(item)}
-          >
-            <Text style={styles.detailButtonText}>Open Survey Details</Text>
-            <Icon
-              name="arrow-right"
-              size={16}
-              color="#fff"
-              style={{ marginLeft: 6 }}
-            />
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
-  );
-};
-
-const MemoizedCard = memo(Card);
-
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 16,
-    paddingHorizontal: 14,
-    backgroundColor: "#F8FAFC",
-  },
-  userCard: {
-    marginBottom: 20,
-    backgroundColor: "#E0F2FE",
-    borderRadius: 14,
-    padding: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-  },
-  userHeader: {
-    marginBottom: 10,
-  },
-  userName: { fontSize: 16, fontWeight: "700", color: "#0284C7", marginLeft: 6 },
-  userEmail: { fontSize: 14, color: "#1E293B", marginLeft: 6 },
-  userPhone: { fontSize: 14, color: "#1E293B", marginLeft: 6 },
-
-  surveyCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 12,
-    marginVertical: 6,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  buildingName: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1E293B",
-    marginLeft: 8,
-  },
-  expandedContainer: {
-    marginTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
-    paddingTop: 10,
-  },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 6,
-  },
-  infoText: {
-    fontSize: 14,
-    color: "#475569",
-    marginLeft: 6,
-  },
-  formRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 10,
-    backgroundColor: "#4A90E2",
-    alignSelf: "flex-start",
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-  },
-  formBadge: {
-    color: "#fff",
-    fontSize: 13,
-    fontWeight: "600",
-    marginLeft: 6,
-  },
-  detailButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#2563EB",
-    justifyContent: "center",
-    borderRadius: 10,
-    paddingVertical: 10,
-    marginTop: 12,
-  },
-  detailButtonText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 15,
+    padding: 16,
+    backgroundColor: '#F8FAFC',
   },
   loader: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F8FAFC",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
   },
   noData: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F8FAFC",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
   },
   noDataText: {
     fontSize: 16,
-    color: "#6B7280",
-    textAlign: "center",
+    color: '#6B7280',
+  },
+  userCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  userInfo: {
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    paddingBottom: 10,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginLeft: 8,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: '#475569',
+    marginLeft: 8,
+  },
+  userPhone: {
+    fontSize: 14,
+    color: '#475569',
+    marginLeft: 8,
+  },
+  summaryBox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#EFF6FF',
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  summaryText: {
+    fontSize: 14,
+    color: '#1E3A8A',
+    marginLeft: 6,
+  },
+  surveyCard: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  buildingName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginLeft: 8,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#475569',
+    marginLeft: 8,
+  },
+  progressText: {
+    marginLeft: 6,
+    fontSize: 13,
+    color: '#2563EB',
+    fontWeight: '500',
+  },
+  progressBarContainer: {
+    height: 8,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginTop: 6,
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#2563EB',
+  },
+  noSurveyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEE2E2',
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 10,
+  },
+  noSurveyText: {
+    color: '#E11D48',
+    fontSize: 14,
+    marginLeft: 6,
   },
 });

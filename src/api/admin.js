@@ -495,3 +495,39 @@ export async function rejectNotification(userId) {
 ////
 ///
 //
+
+export async function getDcraPdf(surveyId) {
+  try {
+    console.log(surveyId); 
+    console.log('==================******************');
+    console.log('====================================');
+    const token = await AsyncStorage.getItem('jwtToken');
+    console.log(token);
+    const response = await fetch(`${API_BASE_URL}/submitform/dcrapdf`,{
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({surveyId}),
+    }); 
+
+    const responseData = await response.json();
+
+    if(!response.ok){
+      console.log('====================================');
+      console.log('Api Error :', responseData);
+      console.log('====================================');
+    } 
+
+    console.log('====================================');
+    console.log('Api console: ',responseData);
+    console.log('====================================');  
+
+    return responseData;
+  } catch (error) {
+    console.log('====================================');
+    console.log('Api or Fetch error: ', error);
+    console.log('====================================');
+  }
+}

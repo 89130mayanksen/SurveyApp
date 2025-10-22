@@ -267,6 +267,9 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.label}>Type:</Text> {item.type_property}
           </Text>
           <Text style={styles.detailText}>
+            <Text style={styles.label}>Building Condition:</Text> {item.building_condition}
+          </Text>
+          <Text style={styles.detailText}>
             <Text style={styles.label}>Location:</Text> {item.location_address}
           </Text>
           <Text style={styles.detailText}>
@@ -387,7 +390,7 @@ export default function DashboardScreen({ navigation }) {
           <TouchableOpacity
             style={styles.formBtn}
             onPress={() => handleFetchFeedback(item)}
-            disabled={loadingFeedbackId === item.survey._id}
+            disabled={loadingFeedbackId === item.survey._id  || item.building_condition === 'new'}
           >
             {loadingFeedbackId === item.survey._id ? (
               <ActivityIndicator

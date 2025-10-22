@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,9 @@ import {
   Linking,
   ActivityIndicator,
   Alert,
-} from "react-native";
-import Icon from "react-native-vector-icons/Feather";
-import { getCompanySurveys } from "../../api/admin";
+} from 'react-native';
+import Icon from 'react-native-vector-icons/Feather';
+import { getCompanySurveys, getDcraPdf } from '../../api/admin';
 
 export default function SubmittedSurveysScreen() {
   const [data, setData] = useState([]);
@@ -26,11 +26,14 @@ export default function SubmittedSurveysScreen() {
       const fetchedData = result?.data || [];
       setData(fetchedData);
       if (fetchedData.length === 0) {
-        Alert.alert("No Submitted Surveys", "There are no submitted surveys available.");
+        Alert.alert(
+          'No Submitted Surveys',
+          'There are no submitted surveys available.',
+        );
       }
     } catch (error) {
-      console.error("Error fetching submitted surveys:", error);
-      Alert.alert("Error", "Failed to fetch submitted surveys.");
+      console.error('Error fetching submitted surveys:', error);
+      Alert.alert('Error', 'Failed to fetch submitted surveys.');
     } finally {
       setLoading(false);
     }
@@ -75,7 +78,8 @@ export default function SubmittedSurveysScreen() {
                 <View style={styles.row}>
                   <Icon name="calendar" size={18} color="#555" />
                   <Text style={styles.dateText}>
-                    Submitted At: {new Date(survey.submittedAt).toLocaleString()}
+                    Submitted At:{' '}
+                    {new Date(survey.submittedAt).toLocaleString()}
                   </Text>
                 </View>
 
@@ -84,7 +88,29 @@ export default function SubmittedSurveysScreen() {
                   onPress={() => Linking.openURL(survey.pdfUrl)}
                 >
                   <Icon name="file-text" size={18} color="#fff" />
-                  <Text style={styles.linkText}>Open PDF</Text>
+                  <Text style={styles.linkText}>TRAI PDF</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={async () => {
+                    try {
+                      const res = await getDcraPdf(survey.surveyId);
+                      console.log('====================================');
+                      console.log('====================================');
+                      console.log(res);
+                      if (res?.dcraPdfUrl) {
+                        Linking.openURL(res.dcraPdfUrl);
+                      } else {
+                        Alert.alert('Error', 'PDF URL not found.');
+                      }
+                    } catch (err) {
+                      console.error('Error opening DCRA PDF:', err);
+                      Alert.alert('Error', 'Failed to open DCRA PDF.');
+                    }
+                  }}
+                  style={styles.linkButton}
+                >
+                  <Icon name="file-text" size={18} color="#fff" />
+                  <Text style={styles.linkText}>DCRA PDF</Text>
                 </TouchableOpacity>
               </View>
             ))
@@ -103,108 +129,108 @@ export default function SubmittedSurveysScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: '#F3F4F6',
     paddingBottom: 30,
   },
   loader: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   noData: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   noDataText: {
     fontSize: 16,
-    color: "#6B7280",
+    color: '#6B7280',
   },
   title: {
     fontSize: 26,
-    fontWeight: "700",
-    color: "#1E293B",
-    textAlign: "center",
+    fontWeight: '700',
+    color: '#1E293B',
+    textAlign: 'center',
     marginBottom: 20,
   },
   userSection: {
     marginBottom: 25,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     padding: 18,
     borderRadius: 16,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOpacity: 0.06,
     shadowRadius: 6,
     elevation: 3,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: '#E5E7EB',
   },
   userHeader: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 6,
   },
   userName: {
     fontSize: 20,
-    fontWeight: "700",
-    color: "#1E293B",
+    fontWeight: '700',
+    color: '#1E293B',
     marginLeft: 8,
   },
   userEmailRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
   },
   userEmail: {
     fontSize: 16,
-    color: "#475569",
+    color: '#475569',
     marginLeft: 8,
   },
   surveyCard: {
-    backgroundColor: "#F4F7FB",
+    backgroundColor: '#F4F7FB',
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: '#E5E7EB',
   },
   row: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
   },
   dateText: {
     fontSize: 15,
-    color: "#1E293B",
+    color: '#1E293B',
     marginLeft: 8,
   },
   linkButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#4A90E2",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4A90E2',
     paddingVertical: 10,
-    justifyContent: "center",
+    justifyContent: 'center',
     borderRadius: 10,
     marginTop: 6,
   },
   linkText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: '600',
     marginLeft: 8,
   },
   noSurveyCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FCEAEA",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FCEAEA',
     padding: 12,
     borderRadius: 12,
-    justifyContent: "center",
+    justifyContent: 'center',
     marginTop: 6,
   },
   noSurveyText: {
     fontSize: 15,
-    color: "#E74C3C",
+    color: '#E74C3C',
     marginLeft: 6,
   },
 });

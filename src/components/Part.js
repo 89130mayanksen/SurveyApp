@@ -39,7 +39,10 @@ export default function Part({ part, formId, surveyId, buildingId }) {
   const handleRatingSubmit = async () => {
     const parsedRating = parseFloat(rating);
     if (isNaN(parsedRating) || parsedRating < 0 || parsedRating > 10) {
-      Alert.alert('Invalid Rating', 'Please enter a valid number between 0 and 10.');
+      Alert.alert(
+        'Invalid Rating',
+        'Please enter a valid number between 0 and 10.',
+      );
       return;
     }
 
@@ -50,7 +53,7 @@ export default function Part({ part, formId, surveyId, buildingId }) {
         buildingId,
         formId,
         part._id,
-        parsedRating
+        parsedRating,
       );
       console.log('Rating Submission Result:', result);
       Alert.alert(`${result.message}`);
@@ -82,7 +85,7 @@ export default function Part({ part, formId, surveyId, buildingId }) {
 
       {/* RATING SECTION */}
       <View style={styles.ratingSection}>
-        <Text style={styles.ratingLabel}>Rating</Text>
+        <Text style={styles.ratingLabel}>Max Rating {part.ratingRule}</Text>
 
         <View style={styles.ratingInputContainer}>
           <TextInput
@@ -91,6 +94,7 @@ export default function Part({ part, formId, surveyId, buildingId }) {
               isRated && { borderColor: '#28A745', backgroundColor: '#F0FFF4' }, // ✅ slight green tint if rated
             ]}
             placeholder="Enter Rating"
+            placeholderTextColor={'#666'}
             keyboardType="numeric"
             value={rating}
             onChangeText={text => {
@@ -112,17 +116,17 @@ export default function Part({ part, formId, surveyId, buildingId }) {
             {isLoading ? (
               <View style={styles.buttonContent}>
                 <ActivityIndicator size="small" color="#fff" />
-                <Text style={styles.buttonText}>  Saving...</Text>
+                <Text style={styles.buttonText}> Saving...</Text>
               </View>
             ) : isRated ? (
               <View style={styles.buttonContent}>
                 <Icon name="check-circle" size={20} color="#fff" />
-                <Text style={styles.buttonText}>  Rated</Text>
+                <Text style={styles.buttonText}> Rated</Text>
               </View>
             ) : (
               <View style={styles.buttonContent}>
                 <Icon name="star" size={20} color="#fff" />
-                <Text style={styles.buttonText}>  Submit</Text>
+                <Text style={styles.buttonText}> Submit</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -181,7 +185,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginRight: 10,
     fontSize: 16,
-    color: '#333',
   },
   ratingButton: {
     backgroundColor: '#1E90FF',
